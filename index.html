@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bangkok Trip Board</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Calistoga&family=Noto+Sans+TC:wght@400;500;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Bangkok Trip Board</p>
+          <h1>五天行程一次填完，手機上也好用。</h1>
+          <p class="hero-text">
+            我把欄位縮成真正會在旅途中反覆查的資訊：日期、航班、進城方式、每日停靠點、Google
+            Maps、預約與備忘。
+          </p>
+        </div>
+
+        <div class="hero-grid">
+          <article class="hero-tile hero-tile-main">
+            <p class="tile-label">先填這些</p>
+            <ul class="tile-list">
+              <li>旅程日期與住宿區域</li>
+              <li>去回程航班與接送</li>
+              <li>每天會去的點與地圖</li>
+              <li>預約、清單、重要提醒</li>
+            </ul>
+          </article>
+
+          <article class="hero-tile">
+            <p class="tile-label">資料方式</p>
+            <p class="tile-copy">先存 `localStorage`，可 JSON 匯入匯出，之後再接 Supabase。</p>
+          </article>
+
+          <article class="hero-tile accent-tile">
+            <p class="tile-label">填寫邏輯</p>
+            <p class="tile-copy">先填大框架，再把每日 stop 與備註慢慢補上。</p>
+          </article>
+        </div>
+      </header>
+
+      <div class="toolbar">
+        <p id="saveStatus" class="save-status">尚未編輯</p>
+        <div class="toolbar-actions">
+          <button id="exportBtn" class="primary-btn" type="button">匯出</button>
+          <button id="importBtn" class="secondary-btn" type="button">匯入</button>
+          <button id="resetBtn" class="ghost-btn" type="button">重設</button>
+          <input id="importFile" type="file" accept="application/json" hidden />
+        </div>
+      </div>
+
+      <main id="app" class="layout">
+        <section class="panel">
+          <div class="section-heading">
+            <div>
+              <p class="section-kicker">Trip Essentials</p>
+              <h2>旅程核心資訊</h2>
+              <p class="section-lead">這一塊最重要，先把旅行的大框架定下來。</p>
+            </div>
+          </div>
+
+          <div class="field-grid">
+            <label class="field">
+              <span>旅程名稱</span>
+              <input data-path="tripName" type="text" placeholder="例如：曼谷五天四夜" />
+            </label>
+            <label class="field">
+              <span>目的地</span>
+              <input data-path="destination" type="text" placeholder="例如：Bangkok" />
+            </label>
+            <label class="field">
+              <span>出發日期</span>
+              <input data-path="startDate" type="date" />
+            </label>
+            <label class="field">
+              <span>回程日期</span>
+              <input data-path="endDate" type="date" />
+            </label>
+            <label class="field">
+              <span>同行者</span>
+              <input data-path="travelers" type="text" placeholder="例如：Tao、家人" />
+            </label>
+            <label class="field">
+              <span>主要住宿區域</span>
+              <input data-path="baseArea" type="text" placeholder="例如：Sukhumvit / Siam" />
+            </label>
+            <label class="field">
+              <span>飯店名稱</span>
+              <input data-path="hotelName" type="text" placeholder="例如：Grande Centre Point" />
+            </label>
+            <label class="field">
+              <span>預算 / 換匯提醒</span>
+              <input
+                data-path="budgetNote"
+                type="text"
+                inputmode="text"
+                placeholder="例如：每人 25,000 TWD / 先換 10,000 THB"
+              />
+            </label>
+            <label class="field field-wide">
+              <span>整體提醒</span>
+              <textarea
+                data-path="tripNote"
+                rows="3"
+                placeholder="例如：入住時間、集合點、需提早預約的餐廳或按摩"
+              ></textarea>
+            </label>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="section-heading">
+            <div>
+              <p class="section-kicker">Flights & Ride</p>
+              <h2>航班與接送</h2>
+              <p class="section-lead">保留最常查的資訊，不把畫面塞滿。</p>
+            </div>
+          </div>
+
+          <div class="split-grid">
+            <article class="subcard">
+              <h3>去程</h3>
+              <div class="field-grid">
+                <label class="field">
+                  <span>航空 / 航班</span>
+                  <input data-path="flights.outbound.airline" type="text" placeholder="例如：EVA BR201" />
+                </label>
+                <label class="field">
+                  <span>訂位代碼</span>
+                  <input data-path="flights.outbound.bookingRef" type="text" placeholder="例如：ABC123" />
+                </label>
+                <label class="field">
+                  <span>出發時間</span>
+                  <input data-path="flights.outbound.departTime" type="datetime-local" />
+                </label>
+                <label class="field">
+                  <span>抵達時間</span>
+                  <input data-path="flights.outbound.arriveTime" type="datetime-local" />
+                </label>
+                <label class="field">
+                  <span>出發機場</span>
+                  <input data-path="flights.outbound.departAirport" type="text" placeholder="例如：TPE" />
+                </label>
+                <label class="field">
+                  <span>抵達機場</span>
+                  <input data-path="flights.outbound.arriveAirport" type="text" placeholder="例如：BKK / DMK" />
+                </label>
+                <label class="field field-wide">
+                  <span>去程備註</span>
+                  <textarea
+                    data-path="flights.outbound.note"
+                    rows="2"
+                    placeholder="例如：幾點出門、是否需要預辦登機"
+                  ></textarea>
+                </label>
+              </div>
+            </article>
+
+            <article class="subcard">
+              <h3>回程</h3>
+              <div class="field-grid">
+                <label class="field">
+                  <span>航空 / 航班</span>
+                  <input data-path="flights.return.airline" type="text" placeholder="例如：EVA BR202" />
+                </label>
+                <label class="field">
+                  <span>訂位代碼</span>
+                  <input data-path="flights.return.bookingRef" type="text" placeholder="例如：ABC123" />
+                </label>
+                <label class="field">
+                  <span>出發時間</span>
+                  <input data-path="flights.return.departTime" type="datetime-local" />
+                </label>
+                <label class="field">
+                  <span>抵達時間</span>
+                  <input data-path="flights.return.arriveTime" type="datetime-local" />
+                </label>
+                <label class="field">
+                  <span>出發機場</span>
+                  <input data-path="flights.return.departAirport" type="text" placeholder="例如：BKK / DMK" />
+                </label>
+                <label class="field">
+                  <span>抵達機場</span>
+                  <input data-path="flights.return.arriveAirport" type="text" placeholder="例如：TPE" />
+                </label>
+                <label class="field field-wide">
+                  <span>回程備註</span>
+                  <textarea
+                    data-path="flights.return.note"
+                    rows="2"
+                    placeholder="例如：幾點從飯店出發、退稅或托運提醒"
+                  ></textarea>
+                </label>
+              </div>
+            </article>
+          </div>
+
+          <div class="field-grid compact-top">
+            <label class="field">
+              <span>機場到市區</span>
+              <input data-path="transport.airportToCity" type="text" placeholder="例如：機場快線 + Grab" />
+            </label>
+            <label class="field">
+              <span>市區主要交通</span>
+              <input data-path="transport.cityTransit" type="text" placeholder="例如：BTS、MRT、Grab" />
+            </label>
+            <label class="field">
+              <span>去機場方式</span>
+              <input data-path="transport.departureRide" type="text" placeholder="例如：飯店叫車 05:30" />
+            </label>
+            <label class="field">
+              <span>交通備註</span>
+              <input data-path="transport.note" type="text" placeholder="例如：尖峰時間很塞，提早出門" />
+            </label>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="section-heading">
+            <div>
+              <p class="section-kicker">Bookings & Notes</p>
+              <h2>預約與備忘</h2>
+              <p class="section-lead">把不屬於單一天、但臨時很常會查的資訊集中放這裡。</p>
+            </div>
+          </div>
+
+          <div class="field-grid">
+            <label class="field">
+              <span>必訂項目</span>
+              <textarea
+                data-path="travelNotes.mustBook"
+                rows="4"
+                placeholder="例如：餐廳、按摩、包車、景觀酒吧"
+              ></textarea>
+            </label>
+            <label class="field">
+              <span>行前清單</span>
+              <textarea
+                data-path="travelNotes.checklist"
+                rows="4"
+                placeholder="例如：護照、eSIM、換匯、雨具、服裝規定"
+              ></textarea>
+            </label>
+            <label class="field">
+              <span>必吃 / 必買</span>
+              <textarea
+                data-path="travelNotes.foodAndShopping"
+                rows="4"
+                placeholder="例如：船麵、711 清單、香氛、藥妝"
+              ></textarea>
+            </label>
+            <label class="field">
+              <span>重要資訊</span>
+              <textarea
+                data-path="travelNotes.importantInfo"
+                rows="4"
+                placeholder="例如：飯店地址、聯絡方式、集合點、旅伴分工"
+              ></textarea>
+            </label>
+            <label class="field field-wide">
+              <span>其他補充</span>
+              <textarea
+                data-path="travelNotes.freeform"
+                rows="4"
+                placeholder="例如：下雨備案、候補店家、朋友推薦"
+              ></textarea>
+            </label>
+          </div>
+        </section>
+
+        <section class="days-section">
+          <div class="section-heading">
+            <div>
+              <p class="section-kicker">Daily Plan</p>
+              <h2>每日行程</h2>
+              <p class="section-lead">每天只填會真正用到的內容，停靠點一張卡片一筆，手機上比較好改。</p>
+            </div>
+          </div>
+          <div id="daysContainer" class="days-stack"></div>
+        </section>
+      </main>
+    </div>
+
+    <template id="dayTemplate">
+      <article class="panel day-card">
+        <div class="day-header">
+          <div>
+            <p class="day-index"></p>
+            <h3 class="day-title-display"></h3>
+          </div>
+          <button class="add-item-btn" type="button">新增停靠點</button>
+        </div>
+
+        <div class="field-grid">
+          <label class="field">
+            <span>日期</span>
+            <input class="day-date-input" type="date" />
+          </label>
+          <label class="field">
+            <span>今天主題</span>
+            <input class="day-title-input" type="text" placeholder="例如：抵達日 / 洽圖洽 / 河岸夜景" />
+          </label>
+          <label class="field">
+            <span>今晚住宿</span>
+            <input class="day-hotel-input" type="text" placeholder="例如：Sukhumvit 飯店" />
+          </label>
+          <label class="field">
+            <span>今日預算</span>
+            <input class="day-budget-input" type="text" inputmode="text" placeholder="例如：3,500 THB" />
+          </label>
+          <label class="field field-wide">
+            <span>今日提醒</span>
+            <textarea class="day-note-input" rows="3" placeholder="例如：先訂晚餐、注意 dress code"></textarea>
+          </label>
+        </div>
+
+        <div class="stop-list day-items-body"></div>
+      </article>
+    </template>
+
+    <template id="itemCardTemplate">
+      <article class="stop-card">
+        <div class="stop-head">
+          <p class="stop-index"></p>
+          <button class="delete-item-btn" type="button">刪除</button>
+        </div>
+
+        <div class="field-grid stop-grid">
+          <label class="field">
+            <span>時間</span>
+            <input class="item-time-input" type="time" />
+          </label>
+          <label class="field">
+            <span>行程</span>
+            <input class="item-title-input" type="text" placeholder="例如：午餐 / 按摩 / 夜市" />
+          </label>
+          <label class="field">
+            <span>地點 / 區域</span>
+            <input class="item-location-input" type="text" placeholder="例如：ICONSIAM / Asok" />
+          </label>
+          <label class="field">
+            <span>交通方式</span>
+            <input class="item-transport-input" type="text" placeholder="例如：BTS / Grab / 步行" />
+          </label>
+          <label class="field field-wide">
+            <span>Google Maps 連結</span>
+            <div class="map-row">
+              <input class="item-map-input" type="url" placeholder="貼上 Google Maps 連結" />
+              <a class="map-link" href="#" target="_blank" rel="noreferrer">打開</a>
+            </div>
+          </label>
+          <label class="field field-wide">
+            <span>備註</span>
+            <textarea class="item-note-input" rows="2" placeholder="例如：已預約 / 候補店 / 集合點"></textarea>
+          </label>
+        </div>
+      </article>
+    </template>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
